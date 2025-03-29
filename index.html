@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan de l'hôpital</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Localisation sur le plan</h1>
+    <div id="map-container">
+        <img id="map" src="plan_hopital.jpg" alt="Plan de l'hôpital">
+        <div id="user-location" class="user-location"></div>
+    </div>
+    <button id="location-btn">Démarrer la localisation</button>
+
+    
+</body>
+
+
+    <script>
+ // Variable pour stocker l'ID du suivi de position
+let watchID = null;
+
+// Fonction pour obtenir la position de l'utilisateur en temps réel
+map.addControl(
+new mapboxgl.GeolocateControl({
+positionOptions: {
+enableHighAccuracy: true
+},
+trackUserLocation: true
+})
+);
+
+map.addControl(new mapboxgl.NavigationControl());7
+
+// Fonction pour mettre à jour la position de l'utilisateur sur le plan en temps réel
+function updatePosition(position) {
+    // Bornes géographiques du plan de l'hôpital
+    let longitude_min = 1.4598; 
+    let longitude_max = 1.4602; 
+    let latitude_min = 43.6280; 
+    let latitude_max = 43.6277; 
+
+    // Coordonnées GPS de l'utilisateur
+    let longitude = position.coords.longitude;
+    let latitude = position.coords.latitude;
+
+    console.log("Coordonnées utilisateur:", longitude, latitude);
+
+    // Vérifier si l'utilisateur est dans les bornes
+    if (longitude >= longitude_min && longitude <= longitude_max && latitude <= latitude_min && latitude >= latitude_max) {
+        // Calcul du pourcentage de position sur l'image
+        let longitude_percentage = ((longitude - longitude_min) / (longitude_max - longitude_min)) * 100;
+        let latitude_percentage = ((latitude_min - latitude) / (latitude_min - latitude_max)) * 100;
+
+        console.log("Position sur l'image: ", longitude_percentage + "% (X), ", latitude_percentage + "% (Y)");
+
+        // Récupérer le marqueur utilisateur
+        let userLocation = document.getElementById("user-location");
+
+        // Positionner le marqueur
+        userLocation.style.left = longitude_percentage + "%";  // Position horizontale
+        userLocation.style.top = latitude_percentage + "%";    // Position verticale
+        userLocation.style.display = "block"; // Afficher le marqueur
+    } else {
+        alert("Vous êtes en dehors de la zone définie pour l'hôpital.");
+    }
+}
+
+// Fonction pour gérer les erreurs de géolocalisation
+function showError(error) {
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            alert("Vous devez autoriser la localisation pour utiliser cette fonctionnalité.");
+            break;
+        case error.POSITION_UNAVAILABLE:
+            alert("La localisation est indisponible.");
+            break;
+        case error.TIMEOUT:
+            alert("La demande de localisation a expiré.");
+            break;
+        default:
+            alert("Une erreur inconnue est survenue.");
+    }
+}
+
+// Écouteur d'événement sur le bouton
+document.getElementById("location-btn").addEventListener("click", startTracking);
+
+
+
+
+    </script>
+</body>
+</html>
