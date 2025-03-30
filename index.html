@@ -7,89 +7,89 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Localisation sur le plan</h1>
     <div id="map-container">
-        <img id="map" src="plan_hopital.jpg" alt="Plan de l'hôpital">
-        <div id="user-location" class="user-location"></div>
+        <img src="plan_hopital.jpg" id="map-image" alt="Plan de l'hôpital">
+        <div id="user-location"></div> <!-- Point bleu de géolocalisation -->
     </div>
-    <button id="location-btn">Démarrer la localisation</button>
-
-    
-</body>
-
-
+    <button id="location-btn">Activer la localisation</button>
     <script>
- // Variable pour stocker l'ID du suivi de position
-let watchID = null;
 
-// Fonction pour obtenir la position de l'utilisateur en temps réel
-map.addControl(
-new mapboxgl.GeolocateControl({
-positionOptions: {
-enableHighAccuracy: true
-},
-trackUserLocation: true
-})
-);
+        let watchID = null;
 
-map.addControl(new mapboxgl.NavigationControl());7
-
-// Fonction pour mettre à jour la position de l'utilisateur sur le plan en temps réel
-function updatePosition(position) {
-    // Bornes géographiques du plan de l'hôpital
-    let longitude_min = 1.4598; 
-    let longitude_max = 1.4602; 
-    let latitude_min = 43.6280; 
-    let latitude_max = 43.6277; 
-
-    // Coordonnées GPS de l'utilisateur
-    let longitude = position.coords.longitude;
-    let latitude = position.coords.latitude;
-
-    console.log("Coordonnées utilisateur:", longitude, latitude);
-
-    // Vérifier si l'utilisateur est dans les bornes
-    if (longitude >= longitude_min && longitude <= longitude_max && latitude <= latitude_min && latitude >= latitude_max) {
-        // Calcul du pourcentage de position sur l'image
-        let longitude_percentage = ((longitude - longitude_min) / (longitude_max - longitude_min)) * 100;
-        let latitude_percentage = ((latitude_min - latitude) / (latitude_min - latitude_max)) * 100;
-
-        console.log("Position sur l'image: ", longitude_percentage + "% (X), ", latitude_percentage + "% (Y)");
-
-        // Récupérer le marqueur utilisateur
-        let userLocation = document.getElementById("user-location");
-
-        // Positionner le marqueur
-        userLocation.style.left = longitude_percentage + "%";  // Position horizontale
-        userLocation.style.top = latitude_percentage + "%";    // Position verticale
-        userLocation.style.display = "block"; // Afficher le marqueur
+// Fonction pour démarrer le suivi de position
+function startTracking() {
+    if (navigator.geolocation) {
+        // Demander la position en utilisant la meilleure précision disponible
+        watchID = navigator.geolocation.watchPosition(updatePosition, showError, {
+            enableHighAccuracy: true,  // Utiliser la meilleure précision disponible (Wi-Fi ou GPS)
+            timeout: 10000,            // Temps d'attente avant expiration
+            maximumAge: 0              // Toujours obtenir la position la plus récente
+        });
     } else {
-        alert("Vous êtes en dehors de la zone définie pour l'hôpital.");
+        alert("Votre navigateur ne supporte pas la géolocalisation.");
     }
 }
 
-// Fonction pour gérer les erreurs de géolocalisation
+// Fonction pour afficher les erreurs de géolocalisation
 function showError(error) {
     switch (error.code) {
         case error.PERMISSION_DENIED:
-            alert("Vous devez autoriser la localisation pour utiliser cette fonctionnalité.");
+            alert("Autorisez la localisation pour voir votre position.");
             break;
         case error.POSITION_UNAVAILABLE:
-            alert("La localisation est indisponible.");
+            alert("Localisation indisponible.");
             break;
         case error.TIMEOUT:
-            alert("La demande de localisation a expiré.");
+            alert("La localisation a expiré.");
             break;
         default:
-            alert("Une erreur inconnue est survenue.");
+            alert("Erreur inconnue.");
     }
 }
 
-// Écouteur d'événement sur le bouton
+// Met à jour la position du point sur le plan
+function updatePosition(position) {
+    let accuracy = position.coords.accuracy;
+    let longitude = position.coords.longitude;
+    let latitude = position.coords.latitude;
+
+    // Affichage des coordonnées dans la console pour débogage
+    console.log("📍 Position utilisateur : Longitude =", longitude, "Latitude =", latitude, "Précision =", accuracy, "m");
+
+    // Si la précision est trop mauvaise, on ignore cette position
+    if (accuracy > 20) {
+        console.warn("Position ignorée car trop imprécise.");
+        return;
+    }
+
+    // Bornes GPS du plan de l'hôpital
+    let longitude_min = 1.4598, longitude_max = 1.4602;
+    let latitude_min = 43.6280, latitude_max = 43.6277;
+
+    console.log("🖼️ Bornes du plan : Longitude min/max =", longitude_min, longitude_max, "Latitude min/max =", latitude_min, latitude_max);
+
+    // Calcul de la position sur le plan en pourcentage
+    let longitude_percentage = ((longitude - longitude_min) / (longitude_max - longitude_min)) * 100;
+    let latitude_percentage = ((latitude_min - latitude) / (latitude_min - latitude_max)) * 100;
+
+    console.log("🎯 Position sur le plan (en %) : X =", longitude_percentage, "%", "Y =", latitude_percentage, "%");
+
+    // Vérifie si l'utilisateur est bien dans la zone définie
+    if (longitude >= longitude_min && longitude <= longitude_max && latitude <= latitude_min && latitude >= latitude_max) {
+        // Positionnement du point bleu
+        let userLocation = document.getElementById("user-location");
+        userLocation.style.left = longitude_percentage + "%";
+        userLocation.style.top = latitude_percentage + "%";
+        userLocation.style.display = "block"; // Affichage du point
+        console.log("✅ Point géolocalisé au centre de l'écran");
+    } else {
+        alert("Vous êtes en dehors de la zone définie.");
+        console.warn("Position hors de la zone !");
+    }
+}
+
+// Bouton pour activer la géolocalisation
 document.getElementById("location-btn").addEventListener("click", startTracking);
-
-
-
 
     </script>
 </body>
